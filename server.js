@@ -6,6 +6,8 @@ import nodemailer from 'nodemailer';
 import fs from 'fs';
 import path from 'path';
 import url from 'url';
+import Razorpay from 'razorpay';
+
 
 dotenv.config();
 
@@ -27,6 +29,14 @@ for (const k of need) {
     process.exit(1);
   }
 }
+
+
+// RAZORPAY
+const razorpay = new Razorpay({
+  key_id: process.env.RAZORPAY_KEY_ID,
+  key_secret: process.env.RAZORPAY_KEY_SECRET,
+});
+
 
 /* ============= SUPABASE + MAILER ============= */
 const supabase = createClient(
@@ -244,7 +254,6 @@ app.post('/razorpay/webhook', async (req, res) => {
     return res.status(400).send('Bad JSON');
   }
 
-  // Signature
   const expected = crypto
     .createHmac('sha256', process.env.RAZORPAY_WEBHOOK_SECRET)
     .update(raw)
@@ -254,30 +263,46 @@ app.post('/razorpay/webhook', async (req, res) => {
     return res.status(400).send('Invalid signature');
   }
 
-  if (payload.event !== 'payment.captured') {
-    return res.json({ status: 'ignored_event' });
+  // 🔹 Case 1: Authorized → Capture immediately
+  if (payload.event === 'payment.authorized') {
+    const paymentId = payload.payload.payment.entity.id;
+    const amount    = payload.payload.payment.entity.amount;
+
+    try {
+      const response = await razorpay.payments.capture(paymentId, amount, 'INR');
+      console.log('Payment captured via webhook:', response);
+    } catch (err) {
+      console.error('Capture failed:', err);
+    }
+    return res.json({ status: 'captured_from_authorized' });
   }
 
-  const internalOrderId =
-    payload?.payload?.payment?.entity?.notes?.internal_order_id;
+  // 🔹 Case 2: Captured → send email
+  if (payload.event === 'payment.captured') {
+    const internalOrderId =
+      payload?.payload?.payment?.entity?.notes?.internal_order_id;
 
-  if (!internalOrderId) {
-    return res.status(400).send('Missing internal_order_id');
+    if (!internalOrderId) {
+      return res.status(400).send('Missing internal_order_id');
+    }
+
+    const orderIdNum = Number(internalOrderId);
+    if (Number.isNaN(orderIdNum)) {
+      return res.status(400).send('Invalid internal_order_id');
+    }
+
+    try {
+      const bundle = await fetchOrderBundle(orderIdNum);
+      await sendOrderEmail(bundle);
+      return res.json({ status: 'ok' });
+    } catch (e) {
+      console.error('Processing error:', e.message);
+      return res.status(500).send('error');
+    }
   }
 
-  const orderIdNum = Number(internalOrderId);
-  if (Number.isNaN(orderIdNum)) {
-    return res.status(400).send('Invalid internal_order_id');
-  }
-
-  try {
-    const bundle = await fetchOrderBundle(orderIdNum);
-    await sendOrderEmail(bundle);
-    res.json({ status: 'ok' });
-  } catch (e) {
-    console.error('Processing error:', e.message);
-    res.status(500).send('error');
-  }
+  // 🔹 All other events
+  return res.json({ status: 'ignored_event' });
 });
 
 /* Start */
