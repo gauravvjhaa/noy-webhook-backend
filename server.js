@@ -244,64 +244,95 @@ app.use(express.json());
 
 /* Webhook */
 app.post('/razorpay/webhook', async (req, res) => {
+  console.log("📩 Incoming Razorpay webhook");
+  console.log("Headers:", req.headers);
+
   const sig = req.headers['x-razorpay-signature'];
   const raw = req.body; // Buffer
   let payload;
 
   try {
     payload = JSON.parse(raw.toString('utf8'));
-  } catch {
+    console.log("✅ Parsed payload:", JSON.stringify(payload, null, 2));
+  } catch (err) {
+    console.error("❌ Failed to parse JSON:", err);
     return res.status(400).send('Bad JSON');
   }
 
-  const expected = crypto
-    .createHmac('sha256', process.env.RAZORPAY_WEBHOOK_SECRET)
-    .update(raw)
-    .digest('hex');
+  // Verify signature
+  try {
+    const expected = crypto
+      .createHmac('sha256', process.env.RAZORPAY_WEBHOOK_SECRET)
+      .update(raw)
+      .digest('hex');
 
-  if (expected !== sig) {
-    return res.status(400).send('Invalid signature');
+    console.log("🔑 Computed signature:", expected);
+    console.log("🔑 Razorpay signature:", sig);
+
+    if (expected !== sig) {
+      console.error("❌ Signature mismatch!");
+      return res.status(400).send('Invalid signature');
+    }
+    console.log("✅ Signature verified");
+  } catch (err) {
+    console.error("❌ Signature verification failed:", err);
+    return res.status(400).send('Invalid signature check failed');
   }
+
+  console.log("📌 Event received:", payload.event);
 
   // 🔹 Case 1: Authorized → Capture immediately
   if (payload.event === 'payment.authorized') {
     const paymentId = payload.payload.payment.entity.id;
     const amount    = payload.payload.payment.entity.amount;
+    console.log(`⚡ payment.authorized → Attempting capture`, { paymentId, amount });
 
     try {
       const response = await razorpay.payments.capture(paymentId, amount, 'INR');
-      console.log('Payment captured via webhook:', response);
+      console.log("✅ Payment captured via webhook:", response);
     } catch (err) {
-      console.error('Capture failed:', err);
+      console.error("❌ Capture failed:", err.message, err);
     }
     return res.json({ status: 'captured_from_authorized' });
   }
 
   // 🔹 Case 2: Captured → send email
   if (payload.event === 'payment.captured') {
+    console.log("📦 payment.captured event received");
+
     const internalOrderId =
       payload?.payload?.payment?.entity?.notes?.internal_order_id;
 
+    console.log("🔍 internal_order_id:", internalOrderId);
+
     if (!internalOrderId) {
+      console.error("❌ Missing internal_order_id in payment.notes");
       return res.status(400).send('Missing internal_order_id');
     }
 
     const orderIdNum = Number(internalOrderId);
     if (Number.isNaN(orderIdNum)) {
+      console.error("❌ Invalid internal_order_id (not a number)");
       return res.status(400).send('Invalid internal_order_id');
     }
 
     try {
+      console.log("📡 Fetching order bundle for order:", orderIdNum);
       const bundle = await fetchOrderBundle(orderIdNum);
+
+      console.log("📧 Sending email for order:", orderIdNum, "to", bundle.user.email);
       await sendOrderEmail(bundle);
+
+      console.log("✅ Email sent successfully for order:", orderIdNum);
       return res.json({ status: 'ok' });
     } catch (e) {
-      console.error('Processing error:', e.message);
+      console.error("❌ Processing error while handling captured payment:", e.message, e);
       return res.status(500).send('error');
     }
   }
 
   // 🔹 All other events
+  console.log("ℹ️ Ignored event type:", payload.event);
   return res.json({ status: 'ignored_event' });
 });
 
