@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Your Order Confirmation</title>
+    <meta name="color-scheme" content="light only" />
+  </head>
+  <body style="margin:0;padding:0;background:#f5f6f8;font-family:Arial,Helvetica,sans-serif;color:#222;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="padding:28px 0;">
+      <tr>
+        <td align="center">
+          <table role="presentation" width="640" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:14px;overflow:hidden;box-shadow:0 4px 18px rgba(0,0,0,0.06);">
+            <!-- Header -->
+            <tr>
+              <td style="background:#111827;padding:26px 28px;text-align:center;">
+                <div style="font-size:24px;letter-spacing:1px;font-weight:700;color:#ffffff;">NEW OF YOU</div>
+              </td>
+            </tr>
+
+            <!-- Intro -->
+            <tr>
+              <td style="padding:30px 34px 10px;">
+                <p style="margin:0 0 10px;font-size:16px;line-height:1.45;">
+                  Hi <strong>{{customer_name}}</strong>,
+                </p>
+                <p style="margin:0 0 14px;font-size:14px;line-height:1.55;color:#444;">
+                  Thanks for your purchase! Your order
+                  <strong>#{{order_id}}</strong> is <strong>{{status}}</strong>.
+                </p>
+                <p style="margin:0 0 14px;font-size:13px;color:#555;">
+                  Payment Method: <strong>{{payment_method}}</strong><br/>
+                  Order Date: {{order_date}}
+                </p>
+              </td>
+            </tr>
+
+            <!-- Items -->
+            <tr>
+              <td style="padding:6px 34px 0;">
+                <h3 style="margin:18px 0 10px;font-size:15px;font-weight:700;color:#111;">Order Items</h3>
+                <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;font-size:13px;">
+                  <thead>
+                    <tr style="background:#f3f4f6;">
+                      <th style="padding:10px;border:1px solid #e5e5e5;text-align:center;width:80px;font-weight:600;color:#333;">Image</th>
+                      <th style="padding:10px;border:1px solid #e5e5e5;text-align:left;font-weight:600;color:#333;">Product</th>
+                      <th style="padding:10px;border:1px solid #e5e5e5;text-align:right;width:110px;font-weight:600;color:#333;">Total</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {{items_html}}
+                  </tbody>
+                </table>
+              </td>
+            </tr>
+
+            <!-- Totals -->
+            <tr>
+              <td style="padding:22px 34px 0;">
+                <table width="100%" cellpadding="0" cellspacing="0" style="font-size:13.5px;">
+                  <tr>
+                    <td style="padding:4px 0;color:#555;">Subtotal:</td>
+                    <td style="padding:4px 0;text-align:right;font-weight:600;">{{currency_symbol}}{{subtotal}}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding:4px 0;color:#555;">Shipping:</td>
+                    <td style="padding:4px 0;text-align:right;font-weight:600;">{{shipping_display}}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding:8px 0;font-weight:700;font-size:14px;">Grand Total:</td>
+                    <td style="padding:8px 0;text-align:right;font-weight:700;font-size:14px;">{{currency_symbol}}{{grand_total}}</td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+
+            <!-- Address -->
+            <tr>
+              <td style="padding:22px 34px 10px;">
+                <h3 style="margin:0 0 10px;font-size:15px;font-weight:700;color:#111;">Shipping Address</h3>
+                <p style="margin:0;font-size:13.5px;line-height:1.55;color:#444;">
+                  {{address_line1}}<br/>
+                  {{address_line2}}<br/>
+                  {{city}}, {{state}} - {{pincode}}<br/>
+                  Phone: {{phone}}
+                </p>
+              </td>
+            </tr>
+
+            <!-- CTA -->
+            <tr>
+              <td style="padding:24px 34px 30px;text-align:center;">
+                <a href="{{order_status_url}}"
+                   style="display:inline-block;background:#111827;color:#ffffff;text-decoration:none;padding:14px 30px;font-size:14px;font-weight:600;border-radius:8px;">
+                  View Your Order
+                </a>
+              </td>
+            </tr>
+
+            <!-- Footer -->
+            <tr>
+              <td style="background:#f9fafb;padding:24px 20px;text-align:center;">
+                <p style="margin:0 0 10px;font-size:12px;color:#555;">
+                  Need help? <a href="{{support_url}}" style="color:#111827;text-decoration:none;">Contact Support</a>
+                </p>
+                <p style="margin:0 0 10px;font-size:12px;color:#555;">
+                  <a href="{{instagram_url}}" style="margin:0 6px;color:#111827;text-decoration:none;">Instagram</a> |
+                  <a href="{{facebook_url}}" style="margin:0 6px;color:#111827;text-decoration:none;">Facebook</a> |
+                  <a href="{{youtube_url}}" style="margin:0 6px;color:#111827;text-decoration:none;">YouTube</a> |
+                  <a href="{{linkedin_url}}" style="margin:0 6px;color:#111827;text-decoration:none;">LinkedIn</a>
+                </p>
+                <p style="margin:0;font-size:11px;color:#888;line-height:1.5;">
+                  © {{current_year}} NEW OF YOU<br/>
+                  <a href="{{unsubscribe_url}}" style="color:#888;text-decoration:none;">Unsubscribe</a>
+                </p>
+              </td>
+            </tr>
+
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>
