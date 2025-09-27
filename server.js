@@ -7,6 +7,7 @@ import fs from 'fs';
 import path from 'path';
 import url from 'url';
 import Razorpay from 'razorpay';
+import cors from 'cors';
 
 
 dotenv.config();
@@ -242,6 +243,12 @@ async function sendOrderEmail({ order, user, addr, items }) {
 /* ============= EXPRESS APP ============= */
 const app = express();
 
+app.use(cors({
+  origin: 'https://noy-admin.web.app', // your frontend URL
+  methods: ['GET', 'POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'x-admin-token'],
+}));
+
 /* Health */
 app.get('/health', (_, res) => res.json({ ok: true }));
 
@@ -291,6 +298,8 @@ app.post("/admin/login", (req, res) => {
 app.get("/admin/secret", requireAdmin, (req, res) => {
   res.json({ message: "Welcome, Admin 🚀" });
 });
+
+
 
 
 /* Webhook */
