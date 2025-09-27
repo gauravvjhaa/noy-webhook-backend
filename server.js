@@ -30,6 +30,12 @@ for (const k of need) {
   }
 }
 
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD
+
+const ADMIN_PASSWORD_HASH = crypto
+  .createHash("sha256")
+  .update(ADMIN_PASSWORD)
+  .digest("hex");
 
 // RAZORPAY
 const razorpay = new Razorpay({
@@ -51,6 +57,9 @@ const transporter = nodemailer.createTransport({
     pass: process.env.SMTP_APP_PASSWORD
   }
 });
+
+
+
 
 /* ============= LOAD HTML TEMPLATE ============= */
 const TEMPLATE_PATH = path.join(__dirname, 'order_confirmation_template.html');
@@ -241,6 +250,48 @@ app.use('/razorpay/webhook', express.raw({ type: 'application/json' }));
 
 /* OTHER JSON (not needed but fine) */
 app.use(express.json());
+
+// Middleware to protect admin APIs
+const validSessions = new Set();
+
+function requireAdmin(req, res, next) {
+  const token = req.headers["x-admin-token"];
+  if (!token || !validSessions.has(token)) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+  next();
+}
+
+
+app.post("/admin/login", (req, res) => {
+  const { password } = req.body;
+
+  if (!password) {
+    return res.status(400).json({ error: "Password required" });
+  }
+
+  // Compare hashed password
+  const hash = crypto.createHash("sha256").update(password).digest("hex");
+
+  if (hash !== ADMIN_PASSWORD_HASH) {
+    return res.status(403).json({ error: "Invalid password" });
+  }
+
+  // ✅ success → send back a simple "session token"
+  // This can just be random string valid until server restarts
+  const token = crypto.randomBytes(24).toString("hex");
+
+  // Store token in memory (or Redis if scaling)
+  validSessions.add(token);
+
+  return res.json({ token });
+});
+
+// Example protected route
+app.get("/admin/secret", requireAdmin, (req, res) => {
+  res.json({ message: "Welcome, Admin 🚀" });
+});
+
 
 /* Webhook */
 app.post('/razorpay/webhook', async (req, res) => {
