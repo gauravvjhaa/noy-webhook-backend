@@ -243,39 +243,17 @@ async function sendOrderEmail({ order, user, addr, items }) {
 /* ============= EXPRESS APP ============= */
 const app = express();
 
-/*
-  IMPORTANT CORS CHANGE:
-  - Use a single, whitelist-based CORS configuration that reflects the incoming Origin
-    if it's in the allowed list. This prevents the server from sending a static
-    Access-Control-Allow-Origin that doesn't match the browser's Origin (which caused
-    the error you reported).
-  - Also ensure preflight is handled.
-*/
-const allowedOrigins = [
-  'https://noy-admin.web.app',
-  'https://gauravbuilds.web.app',
-  // add other allowed origins here, e.g. localhost for dev:
-  // 'http://localhost:5000',
-];
-
 app.use(cors({
-  origin: (origin, callback) => {
-    // `origin` will be undefined for non-browser clients (curl, server-to-server).
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.includes(origin)) {
-      return callback(null, true);
-    }
-    // Not allowed — respond with CORS error
-    return callback(new Error('CORS not allowed for origin: ' + origin));
-  },
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  origin: 'https://noy-admin.web.app', // your frontend URL
+  methods: ['GET', 'POST', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'x-admin-token'],
-  credentials: true,
 }));
 
-// explicitly respond to preflight requests for all routes (optional but explicit)
-app.options('*', cors());
-
+app.use(cors({
+  origin: 'https://gauravbuilds.web.app', // update to your frontend URL
+  methods: ['GET', '    POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'x-admin-token'],
+}));
 
 /* Health */
 app.get('/health', (_, res) => res.json({ ok: true }));
