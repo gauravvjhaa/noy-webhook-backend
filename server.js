@@ -249,6 +249,12 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'x-admin-token'],
 }));
 
+app.use(cors({
+  origin: 'https://gauravbuilds.web.app', // update to your frontend URL
+  methods: ['GET', '    POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'x-admin-token'],
+}));
+
 /* Health */
 app.get('/health', (_, res) => res.json({ ok: true }));
 
