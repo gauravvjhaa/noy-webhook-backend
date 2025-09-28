@@ -243,17 +243,27 @@ async function sendOrderEmail({ order, user, addr, items }) {
 /* ============= EXPRESS APP ============= */
 const app = express();
 
-app.use(cors({
-  origin: 'https://noy-admin.web.app', // your frontend URL
-  methods: ['GET', 'POST', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'x-admin-token'],
-}));
+const allowedOrigins = [
+  "https://noy-admin.web.app",
+  "https://gauravbuilds.web.app",
+];
 
 app.use(cors({
-  origin: 'https://gauravbuilds.web.app', // update to your frontend URL
-  methods: ['GET', '    POST', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'x-admin-token'],
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl)
+    if (!origin) return callback(null, true);
+
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+  methods: ["GET", "POST", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "x-admin-token"],
+  credentials: true, // if you need cookies or auth headers
 }));
+
 
 /* Health */
 app.get('/health', (_, res) => res.json({ ok: true }));
