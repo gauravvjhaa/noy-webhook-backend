@@ -246,6 +246,7 @@ const app = express();
 const allowedOrigins = [
   "https://noy-admin.web.app",
   "https://gauravbuilds.web.app",
+  "https://gauravbuilds.web.app/home",
 ];
 
 app.use(cors({
